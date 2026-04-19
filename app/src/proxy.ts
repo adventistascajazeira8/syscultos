@@ -1,7 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+// 1. Mudamos o nome da função de 'middleware' para 'proxy'
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -40,6 +41,7 @@ export async function middleware(request: NextRequest) {
   return supabaseResponse
 }
 
+// 2. Mantenha o seu config original (ele é mais completo que o exemplo básico)
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }

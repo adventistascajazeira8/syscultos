@@ -1,13 +1,33 @@
 import Link from 'next/link'
-export default function Page() {
+import { createClient } from '@/lib/supabase/server'
+import { PageHeader, EmptyState } from '@/components/ui'
+
+export default async function ResponsaveisPage() {
+  const supabase = await createClient()
+  const { data: users } = await supabase.auth.admin.listUsers().catch(() => ({ data: { users: [] } }))
+
   return (
-    <div style={{ padding: '40px 24px', maxWidth: '500px', margin: '0 auto', textAlign: 'center' }}>
-      <div style={{ width: '48px', height: '48px', background: '#eff6ff', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+    <div style={{ padding: '24px', maxWidth: '700px', margin: '0 auto' }}>
+      <PageHeader title="Responsáveis" subtitle="Usuários com acesso ao SysCultos" />
+
+      <div style={{ padding: '16px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', marginBottom: '20px' }}>
+        <p style={{ fontSize: '13px', color: '#1d4ed8', fontWeight: 500, margin: '0 0 4px' }}>Gerenciar usuários</p>
+        <p style={{ fontSize: '12px', color: '#3b82f6', margin: '0 0 10px' }}>Para convidar um novo membro da equipe, acesse o painel do Supabase.</p>
+        <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer"
+          style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: 500, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+          Abrir Supabase → Authentication → Users
+        </a>
       </div>
-      <h1 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', marginBottom: '8px' }}>Módulo em desenvolvimento</h1>
-      <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '24px' }}>Este módulo será implementado no próximo passo.</p>
-      <Link href="/dashboard" style={{ fontSize: '13px', color: '#2563eb', textDecoration: 'none' }}>← Voltar ao dashboard</Link>
+
+      <div style={{ border: '1px solid #e5e7eb', borderRadius: '12px', padding: '16px' }}>
+        <p style={{ fontSize: '13px', fontWeight: 500, color: '#111827', margin: '0 0 4px' }}>Como adicionar usuários</p>
+        <ol style={{ fontSize: '13px', color: '#4b5563', margin: 0, paddingLeft: '18px', lineHeight: 2 }}>
+          <li>Acesse supabase.com → seu projeto</li>
+          <li>Vá em <strong>Authentication → Users</strong></li>
+          <li>Clique em <strong>Invite user</strong></li>
+          <li>Digite o e-mail da pessoa — ela recebe o link de acesso automaticamente</li>
+        </ol>
+      </div>
     </div>
   )
 }
