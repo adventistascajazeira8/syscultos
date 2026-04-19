@@ -13,3 +13,4 @@ syscultos/
 ├── templates/    ← templates Word (quando tivermos)
 ├── escalas.sql   ← SQL das escalas
 └── README.md
+teste
