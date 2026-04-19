@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f5f5f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1c1c1a" media="(prefers-color-scheme: dark)">
+<title>SysCultos</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #ffffff; --bg2: #f5f5f3; --bg3: #efefed;
+  --bg-info: #e6f1fb; --bg-ok: #eaf3de; --bg-warn: #faeeda; --bg-err: #fcebeb;
+  --tx: #1a1a18; --tx2: #5f5e5a; --tx3: #888780;
+  --tx-info: #0c447c; --tx-ok: #27500a; --tx-warn: #633806; --tx-err: #791f1f;
+  --bd: rgba(0,0,0,0.11); --bd2: rgba(0,0,0,0.20);
+  --bd-ok: #c0dd97; --bd-warn: #fac775; --bd-err: #f7c1c1;
+  --blue: #378ADD; --r: 8px; --r2: 12px;
+  --nav-h: 56px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono: 'SF Mono', 'Fira Code', monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
+    --bg-info: #042c53; --bg-ok: #173404; --bg-warn: #412402; --bg-err: #501313;
+    --tx: #e8e6df; --tx2: #b4b2a9; --tx3: #888780;
+    --tx-info: #85b7eb; --tx-ok: #97c459; --tx-warn: #ef9f27; --tx-err: #f09595;
+    --bd: rgba(255,255,255,0.09); --bd2: rgba(255,255,255,0.17);
+    --bd-ok: #3b6d11; --bd-warn: #854f0b; --bd-err: #a32d2d;
+  }
+}
+html, body { height: 100%; font-family: var(--font); background: var(--bg3); color: var(--tx); }
+
+/* ── LAYOUT SHELL ── */
+.shell { display: flex; height: 100dvh; overflow: hidden; }
+
+/* ── SIDEBAR (desktop) ── */
+.sidebar {
+  width: 210px; flex-shrink: 0; background: var(--bg2);
+  border-right: 0.5px solid var(--bd); display: flex;
+  flex-direction: column; overflow-y: auto; transition: width .2s;
+}
+.logo { padding: 18px 16px 14px; border-bottom: 0.5px solid var(--bd); }
+.logo-name { font-size: 16px; font-weight: 600; color: var(--tx); }
+.logo-sub  { font-size: 11px; color: var(--tx3); margin-top: 2px; }
+.nav-group { padding: 10px 0 4px; }
+.nav-group-label { font-size: 10px; color: var(--tx3); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; padding: 0 16px 5px; }
+.nav-item {
+  display: flex; align-items: center; gap: 9px; padding: 8px 16px;
+  font-size: 13px; color: var(--tx2); cursor: pointer;
+  border-right: 2px solid transparent; transition: background .1s, color .1s;
+  white-space: nowrap;
+}
+.nav-item:hover { background: var(--bg); color: var(--tx); }
+.nav-item.active { background: var(--bg); color: var(--tx); font-weight: 500; border-right-color: var(--blue); }
+.nav-item svg { flex-shrink: 0; opacity: .65; width: 16px; height: 16px; }
+.nav-item.active svg { opacity: 1; }
+.nav-label { display: block; }
+
+/* ── BOTTOM NAV (mobile) ── */
+.bottom-nav {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--nav-h); background: var(--bg2); border-top: 0.5px solid var(--bd);
+  z-index: 100; padding: 0 4px;
+  display: none; align-items: stretch; justify-content: space-around;
+}
+.bnav-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; flex: 1; padding: 6px 4px; cursor: pointer;
+  color: var(--tx3); font-size: 10px; font-weight: 500; border: none;
+  background: transparent; transition: color .1s;
+}
+.bnav-item svg { width: 20px; height: 20px; }
+.bnav-item.active { color: var(--blue); }
+.bnav-item .bnav-dot {
+  width: 4px; height: 4px; border-radius: 50%; background: var(--blue);
+  margin-top: 2px; opacity: 0;
+}
+.bnav-item.active .bnav-dot { opacity: 1; }
+
+/* ── CONTENT ── */
+.content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px; border-bottom: 0.5px solid var(--bd); flex-shrink: 0;
+  gap: 10px; flex-wrap: wrap;
+}
+.topbar-title { font-size: 15px; font-weight: 600; color: var(--tx); }
+.topbar-sub   { font-size: 12px; color: var(--tx2); margin-top: 1px; }
+.id-badge { font-size: 11px; color: var(--tx-ok); background: var(--bg-ok); border: 0.5px solid var(--bd-ok); padding: 4px 10px; border-radius: 20px; font-family: var(--mono); white-space: nowrap; }
+.scroll-area { flex: 1; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
+.footer-bar { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 20px; border-top: 0.5px solid var(--bd); background: var(--bg2); flex-shrink: 0; }
+
+/* ── FORM BASE ── */
+.sec { margin-bottom: 26px; }
+.sec-label { font-size: 10px; font-weight: 600; color: var(--tx3); text-transform: uppercase; letter-spacing: .07em; padding-bottom: 10px; border-bottom: 0.5px solid var(--bd); margin-bottom: 14px; }
+.row  { display: grid; gap: 12px; margin-bottom: 12px; }
+.c2   { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.c3   { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.fld  { display: flex; flex-direction: column; gap: 5px; }
+.fld label { font-size: 12px; font-weight: 500; color: var(--tx2); }
+.hint { font-size: 11px; color: var(--tx3); }
+input, select, textarea {
+  width: 100%; padding: 9px 11px; border: 0.5px solid var(--bd2);
+  border-radius: var(--r); font-size: 14px; color: var(--tx);
+  background: var(--bg); font-family: var(--font); outline: none;
+  transition: border-color .15s; -webkit-appearance: none; appearance: none;
+}
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23888' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
+input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(55,138,221,.12); }
+textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+.id-preview { font-family: var(--mono); font-size: 13px; color: var(--tx-ok); background: var(--bg-ok); padding: 9px 11px; border-radius: var(--r); border: 0.5px solid var(--bd-ok); min-height: 40px; display: flex; align-items: center; }
+
+/* ── TOGGLE ── */
+.tog-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border: 0.5px solid var(--bd); border-radius: var(--r); margin-bottom: 8px; gap: 12px; }
+.tog-row .tl { font-size: 13px; color: var(--tx); }
+.tog-row .ts { font-size: 11px; color: var(--tx2); margin-top: 2px; }
+.tog { width: 40px; height: 24px; border-radius: 12px; background: var(--bd2); cursor: pointer; position: relative; transition: background .2s; flex-shrink: 0; }
+.tog.on { background: var(--blue); }
+.tog::after { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: #fff; top: 3px; left: 3px; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+.tog.on::after { transform: translateX(16px); }
+
+/* ── ITEM BLOCKS ── */
+.item-block { border: 0.5px solid var(--bd); border-radius: var(--r); margin-bottom: 8px; overflow: hidden; }
+.item-hd { display: flex; align-items: center; gap: 10px; padding: 11px 12px; background: var(--bg2); cursor: pointer; user-select: none; }
+.item-drag { color: var(--tx3); font-size: 16px; cursor: grab; }
+.item-name { font-size: 13px; color: var(--tx); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-bd { padding: 12px; border-top: 0.5px solid var(--bd); }
+.item-grid { display: grid; grid-template-columns: 96px 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.ico-btn { width: 32px; height: 32px; border-radius: var(--r); border: 0.5px solid var(--bd); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--tx2); font-size: 13px; flex-shrink: 0; transition: background .1s; }
+.ico-btn:hover { background: var(--bg3); }
+
+/* ── BADGES ── */
+.badge { display: inline-flex; align-items: center; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; }
+.b-mus  { background:#e1f5ee; color:#085041; }
+.b-esp  { background:#fbeaf0; color:#72243e; }
+.b-vid  { background:#faeeda; color:#633806; }
+.b-ora  { background:#eeedfe; color:#3c3489; }
+.b-atv  { background:#e6f1fb; color:#0c447c; }
+.b-ser  { background:#f1efe8; color:#444441; }
+.b-ok   { background: var(--bg-ok);  color: var(--tx-ok); }
+.b-warn { background: var(--bg-warn); color: var(--tx-warn); }
+.b-err  { background: var(--bg-err);  color: var(--tx-err); }
+@media (prefers-color-scheme: dark) {
+  .b-mus { background:#085041; color:#9fe1cb; }
+  .b-esp { background:#4b1528; color:#ed93b1; }
+  .b-vid { background:#412402; color:#fac775; }
+  .b-ora { background:#26215c; color:#afa9ec; }
+  .b-atv { background:#042c53; color:#85b7eb; }
+  .b-ser { background:#2c2c2a; color:#b4b2a9; }
+}
+
+/* ── MUSIC TAGS ── */
+.music-row  { display: flex; gap: 8px; margin-bottom: 8px; }
+.music-tag  { display: inline-flex; align-items: center; gap: 5px; background: var(--bg2); border: 0.5px solid var(--bd); border-radius: 6px; padding: 5px 9px; font-size: 12px; color: var(--tx); margin: 3px 3px 3px 0; }
+.music-link { color: var(--tx-info); font-size: 11px; }
+.music-x    { color: var(--tx3); cursor: pointer; margin-left: 2px; font-size: 11px; }
+.auto-row   { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--bg2); border-radius: var(--r); font-size: 13px; color: var(--tx2); }
+.auto-row a { color: var(--tx-info); cursor: pointer; margin-left: auto; text-decoration: none; font-size: 12px; white-space: nowrap; }
+
+/* ── ADD MENU ── */
+.add-btn { display: flex; align-items: center; gap: 7px; padding: 10px 13px; border: 1px dashed var(--bd2); border-radius: var(--r); font-size: 13px; color: var(--tx2); cursor: pointer; background: transparent; width: 100%; font-family: var(--font); transition: background .1s; }
+.add-btn:hover { background: var(--bg2); color: var(--tx); }
+.add-menu { border: 0.5px solid var(--bd2); border-radius: var(--r); margin-top: 6px; overflow: hidden; display: none; }
+.add-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.add-opt  { padding: 11px 14px; font-size: 13px; cursor: pointer; border-right: 0.5px solid var(--bd); border-bottom: 0.5px solid var(--bd); color: var(--tx); display: flex; align-items: center; gap: 8px; transition: background .1s; }
+.add-opt:nth-child(2n)   { border-right: none; }
+.add-opt:nth-child(n+3)  { border-bottom: none; }
+.add-opt:hover { background: var(--bg2); }
+
+/* ── BUTTONS ── */
+.btn { padding: 9px 16px; border-radius: var(--r); font-size: 14px; cursor: pointer; font-weight: 500; font-family: var(--font); border: 0.5px solid var(--bd2); background: transparent; color: var(--tx2); transition: background .1s, opacity .1s; }
+.btn:hover   { background: var(--bg2); color: var(--tx); }
+.btn:active  { transform: scale(.98); }
+.btn-pr { background: var(--blue); color: #fff; border-color: var(--blue); }
+.btn-pr:hover { opacity: .88; background: var(--blue); color: #fff; }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+
+/* ── PANELS ── */
+.panel { display: none; height: 100%; flex-direction: column; }
+.panel.active { display: flex; }
+
+/* ── BIBLIOTECA ── */
+.lib-hd { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.lib-table { width: 100%; border-collapse: collapse; }
+.lib-table th { font-size: 11px; font-weight: 600; color: var(--tx3); text-transform: uppercase; letter-spacing: .05em; padding: 7px 10px; border-bottom: 0.5px solid var(--bd); text-align: left; }
+.lib-table td { padding: 11px 10px; border-bottom: 0.5px solid var(--bd); vertical-align: middle; font-size: 13px; }
+.lib-table tr:last-child td { border-bottom: none; }
+.lib-table tr:hover td { background: var(--bg2); }
+.lib-t { font-weight: 500; color: var(--tx); }
+.lib-l { font-size: 11px; color: var(--tx-info); display: block; margin-top: 2px; }
+
+/* ── SONOPLASTIA CARDS ── */
+.prog-card { border: 0.5px solid var(--bd); border-radius: var(--r2); overflow: hidden; margin-bottom: 12px; }
+.prog-card.ok   { border-color: var(--bd-ok); }
+.prog-card.warn { border-color: var(--bd-warn); }
+.prog-card.err  { border-color: var(--bd-err); }
+.prog-hd { display: flex; align-items: flex-start; justify-content: space-between; padding: 14px 16px; background: var(--bg2); gap: 12px; flex-wrap: wrap; }
+.prog-card.warn .prog-hd { background: var(--bg-warn); }
+.prog-card.err  .prog-hd { background: var(--bg-err); }
+.prog-title { font-size: 14px; font-weight: 600; color: var(--tx); }
+.prog-id    { font-size: 11px; color: var(--tx2); font-family: var(--mono); margin-top: 2px; }
+.prog-acts  { display: flex; gap: 6px; flex-wrap: wrap; }
+.prog-meta  { display: flex; align-items: center; gap: 14px; padding: 10px 16px; font-size: 12px; color: var(--tx2); flex-wrap: wrap; }
+.prog-meta strong { color: var(--tx); font-weight: 500; }
+.prog-status { margin-left: auto; font-weight: 500; font-size: 12px; }
+
+/* ── MIDIA OPTS ── */
+.midia-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.midia-opt  { padding: 14px; border: 0.5px solid var(--bd2); border-radius: var(--r); cursor: pointer; text-align: center; transition: border-color .15s; }
+.midia-opt.sel { border: 2px solid var(--blue); }
+.midia-opt-t  { font-size: 13px; font-weight: 500; color: var(--tx); }
+.midia-opt-s  { font-size: 11px; color: var(--tx2); margin-top: 3px; }
+.upload-zone  { border: 1.5px dashed var(--bd2); border-radius: var(--r); padding: 32px 20px; text-align: center; }
+.upload-zone p   { font-size: 13px; color: var(--tx2); margin-bottom: 10px; }
+.upload-hint { font-size: 11px; color: var(--tx3); margin-top: 8px; }
+
+/* ═══════════════════════════
+   RESPONSIVE BREAKPOINTS
+═══════════════════════════ */
+
+/* Tablet: 481–900px */
+@media (max-width: 900px) {
+  .sidebar { width: 52px; }
+  .logo-name, .logo-sub, .nav-group-label, .nav-label { display: none; }
+  .logo { padding: 14px 10px; }
+  .nav-item { justify-content: center; padding: 10px; border-right: none; }
+  .nav-item.active { background: var(--bg); border-right: none; border-radius: 0; }
+  .c3 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+
+/* Mobile: ≤ 480px */
+@media (max-width: 480px) {
+  .sidebar { display: none; }
+  .bottom-nav { display: flex; }
+  .content { padding-bottom: var(--nav-h); }
+  .scroll-area { padding: 14px; }
+  .topbar { padding: 12px 14px; }
+  .footer-bar { padding: 10px 14px; }
+  .c2, .c3 { grid-template-columns: minmax(0,1fr); }
+  .item-grid { grid-template-columns: minmax(0,1fr); }
+  .id-preview { font-size: 11px; }
+  .prog-hd { flex-direction: column; }
+  .prog-acts { width: 100%; }
+  .prog-acts .btn { flex: 1; font-size: 12px; padding: 7px 8px; text-align: center; }
+  .prog-meta { gap: 8px; }
+  .prog-status { margin-left: 0; width: 100%; }
+  .midia-opts { grid-template-columns: 1fr 1fr; }
+  .add-grid { grid-template-columns: 1fr; }
+  .add-opt { border-right: none !important; }
+  .add-opt:nth-child(n+2) { border-top: 0.5px solid var(--bd); }
+  .add-opt:last-child { border-bottom: none; }
+  .lib-hd { gap: 8px; }
+  .lib-table th:nth-child(n+3), .lib-table td:nth-child(n+3) { display: none; }
+  .footer-bar { gap: 8px; }
+  .footer-bar .btn { flex: 1; text-align: center; }
+  .topbar-title { font-size: 14px; }
+}
+
+/* Very small: ≤ 360px */
+@media (max-width: 360px) {
+  .scroll-area { padding: 12px; }
+  .prog-acts .btn { font-size: 11px; padding: 6px 6px; }
+  .btn-sm { font-size: 12px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ── SIDEBAR (tablet + desktop) ── -->
+  <nav class="sidebar">
+    <div class="logo">
+      <div class="logo-name">SysCultos</div>
+      <div class="logo-sub">Igreja Adventista</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Cadastro</div>
+      <div class="nav-item active" onclick="go(this,'culto')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 3V2M11 3V2M2 7h12"/></svg>
+        <span class="nav-label">Culto / Programação</span>
+      </div>
+      <div class="nav-item" onclick="go(this,'musicas')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 12V4l8-2v8"/><circle cx="4" cy="12" r="2"/><circle cx="12" cy="10" r="2"/></svg>
+        <span class="nav-label">Músicas</span>
+      </div>
+      <div class="nav-item" onclick="go(this,'midias')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="9" rx="1.5"/><path d="M6 7.5l4 2-4 2V7.5z" fill="currentColor" stroke="none"/></svg>
+        <span class="nav-label">Mídias</span>
+      </div>
+      <div class="nav-item" onclick="go(this,'responsaveis')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+        <span class="nav-label">Responsáveis</span>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Biblioteca</div>
+      <div class="nav-item" onclick="go(this,'biblioteca')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2h2v12H3zM7 2h2v12H7zM11 2l2 .5v11l-2-.5z"/></svg>
+        <span class="nav-label">Biblioteca</span>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Painel</div>
+      <div class="nav-item" onclick="go(this,'sono')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="10" height="8" rx="1"/><path d="M11 6l4-2v8l-4-2"/></svg>
+        <span class="nav-label">Sonoplastia</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── MAIN CONTENT ── -->
+  <div class="content">
+
+    <!-- ╔══ CULTO ══╗ -->
+    <div id="p-culto" class="panel active">
+      <div class="topbar">
+        <div><div class="topbar-title">Novo culto / programação</div><div class="topbar-sub">Selecione o tipo e a data para gerar a ID</div></div>
+        <div class="id-badge" id="id-top">ID automática</div>
+      </div>
+      <div class="scroll-area">
+
+        <div class="sec">
+          <div class="sec-label">Identificação do culto</div>
+          <div class="row c3">
+            <div class="fld">
+              <label>Tipo de culto</label>
+              <select id="tipo" onchange="gerarId()">
+                <option value="">Selecionar...</option>
+                <option value="SAB-MANHA">Sábado manhã</option>
+                <option value="SAB-TARDE">Culto Jovem (Sáb tarde)</option>
+                <option value="DOM">Domingos Especiais</option>
+                <option value="QUA">Quarta — 10 dias oração</option>
+                <option value="BATISMO">Batismo</option>
+                <option value="SEM-ORACAO">Semana de oração</option>
+              </select>
+            </div>
+            <div class="fld">
+              <label>Data</label>
+              <input type="date" id="data" oninput="gerarId()">
+            </div>
+            <div class="fld">
+              <label>ID gerada</label>
+              <div class="id-preview" id="id-box">—</div>
+            </div>
+          </div>
+          <div id="bloco-sab" style="display:none;margin-top:4px">
+            <div class="tog-row">
+              <div><div class="tl">Blocos separados (Escola Sabatina + Culto Divino)</div><div class="ts">Ative se ministérios diferentes conduzem cada bloco</div></div>
+              <div class="tog" id="tog-blocos" onclick="this.classList.toggle('on');togBlocos()"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sec">
+          <div class="sec-label">Responsáveis gerais</div>
+          <div class="row c2">
+            <div class="fld">
+              <label>Ancião do mês</label>
+              <select><option value="">Selecionar...</option><option>Anc. João Silva</option><option>Anc. Pedro Costa</option><option>Anc. Marcos Alves</option></select>
+            </div>
+            <div class="fld">
+              <label>Ministério responsável</label>
+              <select><option value="">Selecionar...</option><option>Ministério Alegria</option><option>Ministério Jovem</option><option>Ministério da Mulher</option><option>Desbravadores</option></select>
+            </div>
+          </div>
+          <div class="row c2" id="bloco-es" style="display:none">
+            <div class="fld"><label>Ministério — Escola Sabatina</label><select><option>Selecionar...</option><option>Min. da Criança</option><option>Juvenis</option></select></div>
+            <div class="fld"><label>Ministério — Culto Divino</label><select><option>Selecionar...</option><option>Ministério Alegria</option></select></div>
+          </div>
+        </div>
+
+        <div class="sec">
+          <div class="sec-label">Itens da programação</div>
+
+          <div class="item-block">
+            <div class="item-hd">
+              <span class="item-drag">⠿</span><span class="badge b-ora">oração</span>
+              <span class="item-name">Abertura / Oração</span>
+              <div class="ico-btn">✕</div>
+            </div>
+            <div class="item-bd">
+              <div class="item-grid">
+                <div class="fld"><label>Horário</label><input type="time" value="09:00"></div>
+                <div class="fld"><label>Atividade</label><input type="text" value="Abertura / Oração"></div>
+                <div class="fld"><label>Responsável</label><input type="text" value="Ancião do mês"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="item-block">
+            <div class="item-hd">
+              <span class="item-drag">⠿</span><span class="badge b-mus">música</span>
+              <span class="item-name">Serviço de Cânticos</span>
+              <div class="ico-btn">✕</div>
+            </div>
+            <div class="item-bd">
+              <div class="item-grid">
+                <div class="fld"><label>Horário</label><input type="time" value="09:05"></div>
+                <div class="fld"><label>Atividade</label><input type="text" value="Serviço de Cânticos"></div>
+                <div class="fld"><label>Responsável</label><input type="text" value="Min. da Música"></div>
+              </div>
+              <div class="music-row">
+                <input type="text" placeholder="Buscar na biblioteca ou digitar título..." style="flex:1;font-size:13px">
+                <button class="btn btn-sm">+ Adicionar</button>
+              </div>
+              <div>
+                <div class="music-tag">Preciso de Ti <span class="music-link">youtu.be/abc123</span><span class="music-x">✕</span></div>
+                <div class="music-tag">Grande és Tu <span class="music-link">youtu.be/def456</span><span class="music-x">✕</span></div>
+                <div class="music-tag">Santo Espírito <span class="music-link">youtu.be/ghi789</span><span class="music-x">✕</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="item-block">
+            <div class="item-hd">
+              <span class="item-drag">⠿</span><span class="badge b-esp">especial</span>
+              <span class="item-name">Música Especial</span>
+              <div class="ico-btn">✕</div>
+            </div>
+            <div class="item-bd">
+              <div class="item-grid">
+                <div class="fld"><label>Horário</label><input type="time" value="09:30"></div>
+                <div class="fld"><label>Atividade</label><input type="text" value="Música Especial"></div>
+                <div class="fld"><label>Responsável</label><input type="text" value="Grupo Louvor Vivo"></div>
+              </div>
+              <div class="music-row">
+                <input type="text" placeholder="Buscar na biblioteca..." style="flex:1;font-size:13px">
+                <button class="btn btn-sm">+ Adicionar</button>
+              </div>
+              <div class="music-tag">Deus Cuida de Mim <span class="music-link">youtu.be/jkl012</span><span class="music-x">✕</span></div>
+              <div class="fld" style="margin-top:10px"><label>Observação</label><input type="text" value="Solo: Maria Souza"></div>
+            </div>
+          </div>
+
+          <div class="item-block">
+            <div class="item-hd">
+              <span class="item-drag">⠿</span><span class="badge b-vid">vídeo</span>
+              <span class="item-name">Provai e Vede <span class="badge b-warn" style="font-size:9px;margin-left:4px">auto</span></span>
+              <div class="ico-btn">✕</div>
+            </div>
+            <div class="item-bd">
+              <div class="item-grid">
+                <div class="fld"><label>Horário</label><input type="time" value="09:40"></div>
+                <div class="fld"><label>Atividade</label><input type="text" value="Provai e Vede"></div>
+                <div class="fld"><label>Responsável</label><input type="text" value="Sonoplastia"></div>
+              </div>
+              <div class="auto-row">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+                Buscando vídeo da semana automaticamente...
+                <a>Substituir</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="item-block">
+            <div class="item-hd">
+              <span class="item-drag">⠿</span><span class="badge b-atv">atividade</span>
+              <span class="item-name">Dízimos e Ofertas</span>
+              <div class="ico-btn">✕</div>
+            </div>
+            <div class="item-bd">
+              <div class="item-grid">
+                <div class="fld"><label>Horário</label><input type="time" value="09:45"></div>
+                <div class="fld"><label>Atividade</label><input type="text" value="Dízimos e Ofertas"></div>
+                <div class="fld"><label>Responsável</label><input type="text" value="Min. Mordomia"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="item-block">
+            <div class="item-hd">
+              <span class="item-drag">⠿</span><span class="badge b-vid">vídeo</span>
+              <span class="item-name">Verdade Seja Dita <span class="badge b-warn" style="font-size:9px;margin-left:4px">auto</span></span>
+              <div class="ico-btn">✕</div>
+            </div>
+            <div class="item-bd">
+              <div class="item-grid">
+                <div class="fld"><label>Horário</label><input type="time" value="09:50"></div>
+                <div class="fld"><label>Atividade</label><input type="text" value="Verdade Seja Dita"></div>
+                <div class="fld"><label>Responsável</label><input type="text" value="Sonoplastia"></div>
+              </div>
+              <div class="auto-row">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+                Episódio da semana buscado automaticamente
+                <a>Substituir</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="item-block">
+            <div class="item-hd">
+              <span class="item-drag">⠿</span><span class="badge b-ser">sermão</span>
+              <span class="item-name">Sermão / Mensagem</span>
+              <div class="ico-btn">✕</div>
+            </div>
+            <div class="item-bd">
+              <div class="item-grid">
+                <div class="fld"><label>Horário</label><input type="time" value="10:00"></div>
+                <div class="fld"><label>Atividade</label><input type="text" value="Sermão / Mensagem"></div>
+                <div class="fld"><label>Responsável</label><input type="text" placeholder="Pr. ou Ancião..."></div>
+              </div>
+              <div class="fld"><label>Tema / título da mensagem</label><input type="text" placeholder="Tema (opcional)"></div>
+            </div>
+          </div>
+
+          <div class="item-block">
+            <div class="item-hd">
+              <span class="item-drag">⠿</span><span class="badge b-mus">música</span>
+              <span class="item-name">Hino de encerramento</span>
+              <div class="ico-btn">✕</div>
+            </div>
+            <div class="item-bd">
+              <div class="item-grid">
+                <div class="fld"><label>Horário</label><input type="time" value="10:40"></div>
+                <div class="fld"><label>Atividade</label><input type="text" value="Hino de encerramento"></div>
+                <div class="fld"><label>Responsável</label><input type="text" value="Min. da Música"></div>
+              </div>
+              <div class="music-row">
+                <input type="text" placeholder="Buscar na biblioteca..." style="flex:1;font-size:13px">
+                <button class="btn btn-sm">+ Adicionar</button>
+              </div>
+              <div class="music-tag">Maravilhosa Graça <span class="music-link">youtu.be/stu901</span><span class="music-x">✕</span></div>
+            </div>
+          </div>
+
+          <div class="item-block">
+            <div class="item-hd">
+              <span class="item-drag">⠿</span><span class="badge b-ora">oração</span>
+              <span class="item-name">Oração final / Bênção</span>
+              <div class="ico-btn">✕</div>
+            </div>
+            <div class="item-bd">
+              <div class="item-grid">
+                <div class="fld"><label>Horário</label><input type="time" value="10:45"></div>
+                <div class="fld"><label>Atividade</label><input type="text" value="Oração final / Bênção"></div>
+                <div class="fld"><label>Responsável</label><input type="text" value="Ancião do mês"></div>
+              </div>
+            </div>
+          </div>
+
+          <button class="add-btn" onclick="togMenu()">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 3v10M3 8h10"/></svg>
+            Adicionar item à programação
+          </button>
+          <div class="add-menu" id="add-menu">
+            <div class="add-grid">
+              <div class="add-opt" onclick="togMenu()"><span class="badge b-mus">música</span>Cânticos / Especial</div>
+              <div class="add-opt" onclick="togMenu()"><span class="badge b-vid">vídeo</span>Vídeo / Mídia</div>
+              <div class="add-opt" onclick="togMenu()"><span class="badge b-ora">oração</span>Oração / Bênção</div>
+              <div class="add-opt" onclick="togMenu()"><span class="badge b-atv">atividade</span>Atividade livre</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="footer-bar">
+        <button class="btn">Salvar rascunho</button>
+        <button class="btn btn-pr">Salvar programação</button>
+      </div>
+    </div>
+
+    <!-- ╔══ MÚSICAS ══╗ -->
+    <div id="p-musicas" class="panel">
+      <div class="topbar">
+        <div><div class="topbar-title">Cadastrar música</div><div class="topbar-sub">Vinculada ao culto da semana</div></div>
+        <div class="id-badge">SAB-MANHA-2025-04-05</div>
+      </div>
+      <div class="scroll-area">
+        <div class="sec">
+          <div class="sec-label">Dados da música</div>
+          <div class="row c2">
+            <div class="fld"><label>Título da música</label><input type="text" placeholder="Digite ou busque na biblioteca..."><div class="hint">Autocomplete busca ao digitar</div></div>
+            <div class="fld"><label>Artista / Intérprete</label><input type="text" placeholder="Nome do artista ou grupo"></div>
+          </div>
+          <div class="row c3">
+            <div class="fld"><label>Tipo</label>
+              <select><option>Congregacional</option><option>Música especial</option><option>Hino</option><option>Coral</option><option>Solo</option><option>Duo / Trio</option></select>
+            </div>
+            <div class="fld"><label>Tom</label>
+              <select><option>—</option><option>Dó</option><option>Dó#</option><option>Ré</option><option>Ré#</option><option>Mi</option><option>Fá</option><option>Fá#</option><option>Sol</option><option>Sol#</option><option>Lá</option><option>Lá#</option><option>Si</option></select>
+            </div>
+            <div class="fld"><label>Ministério / grupo</label><input type="text" placeholder="Quem canta?"></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">Links e parte do culto</div>
+          <div class="row c2">
+            <div class="fld"><label>Link YouTube</label><input type="url" placeholder="https://youtu.be/..."></div>
+            <div class="fld"><label>Parte do culto</label>
+              <select><option>Serviço de Cânticos</option><option>Música Especial</option><option>Hino de encerramento</option><option>Louvor pós-mensagem</option><option>Escola Sabatina</option><option>Outra parte</option></select>
+            </div>
+          </div>
+          <div class="fld"><label>Cifra / letra (link — opcional)</label><input type="url" placeholder="https://cifraclub.com/... ou drive.google.com/..."></div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">Biblioteca</div>
+          <div class="tog-row">
+            <div><div class="tl">Adicionar à biblioteca de músicas</div><div class="ts">Ficará disponível para buscas em programações futuras</div></div>
+            <div class="tog on" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bar">
+        <button class="btn">Cancelar</button>
+        <button class="btn btn-pr">Salvar música</button>
+      </div>
+    </div>
+
+    <!-- ╔══ MÍDIAS ══╗ -->
+    <div id="p-midias" class="panel">
+      <div class="topbar">
+        <div><div class="topbar-title">Enviar mídia</div><div class="topbar-sub">Vídeo, imagem, apresentação ou PDF</div></div>
+        <div class="id-badge">SAB-MANHA-2025-04-05</div>
+      </div>
+      <div class="scroll-area">
+        <div class="sec">
+          <div class="sec-label">Identificação</div>
+          <div class="row c3">
+            <div class="fld"><label>Tipo de mídia</label>
+              <select><option>Vídeo</option><option>Imagem</option><option>Apresentação (PPT)</option><option>Documento PDF</option><option>Outro</option></select>
+            </div>
+            <div class="fld"><label>Título / descrição</label><input type="text" placeholder="Ex: Slides do sermão"></div>
+            <div class="fld"><label>Vinculada ao item</label>
+              <select><option>Sermão / Mensagem</option><option>Provai e Vede</option><option>Verdade Seja Dita</option><option>Escola Sabatina</option><option>Outro item</option></select>
+            </div>
+          </div>
+          <div class="row c2">
+            <div class="fld"><label>Ministério de origem</label><input type="text" placeholder="Ministério que envia a mídia"></div>
+            <div class="fld"><label>Observação para sonoplastia</label><input type="text" placeholder="Ex: exibir antes do sermão..."></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">Origem da mídia</div>
+          <div class="midia-opts">
+            <div class="midia-opt sel" id="opt-up" onclick="setMidia('up')"><div class="midia-opt-t">Fazer upload</div><div class="midia-opt-s">Enviar do dispositivo</div></div>
+            <div class="midia-opt"     id="opt-lk" onclick="setMidia('lk')"><div class="midia-opt-t">Link externo</div><div class="midia-opt-s">YouTube, Drive, Dropbox...</div></div>
+          </div>
+          <div id="zone-up" class="upload-zone">
+            <p>Arraste o arquivo aqui ou clique para selecionar</p>
+            <button class="btn btn-sm">Selecionar arquivo</button>
+            <div class="upload-hint">MP4, MOV, JPG, PNG, PPTX, PDF — máx. 500 MB</div>
+          </div>
+          <div id="zone-lk" style="display:none">
+            <div class="fld"><label>URL da mídia</label><input type="url" placeholder="https://youtu.be/... ou drive.google.com/..."></div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bar">
+        <button class="btn">Cancelar</button>
+        <button class="btn btn-pr">Enviar mídia</button>
+      </div>
+    </div>
+
+    <!-- ╔══ RESPONSÁVEIS ══╗ -->
+    <div id="p-responsaveis" class="panel">
+      <div class="topbar">
+        <div><div class="topbar-title">Responsáveis</div><div class="topbar-sub">Cadastro e permissões de acesso</div></div>
+        <button class="btn btn-pr btn-sm">+ Novo</button>
+      </div>
+      <div class="scroll-area">
+        <div class="sec">
+          <div class="sec-label">Dados pessoais</div>
+          <div class="row c2">
+            <div class="fld"><label>Nome completo</label><input type="text" placeholder="Nome do responsável"></div>
+            <div class="fld"><label>Como aparece na programação</label><input type="text" placeholder="Ex: Anc. João Silva"></div>
+          </div>
+          <div class="row c2">
+            <div class="fld"><label>WhatsApp</label><input type="tel" placeholder="+55 71 99999-0000"></div>
+            <div class="fld"><label>E-mail</label><input type="email" placeholder="email@exemplo.com"></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">Função e ministério</div>
+          <div class="row c2">
+            <div class="fld"><label>Função na igreja</label>
+              <select><option>Ancião</option><option>Pastor</option><option>Diácono / Diaconisa</option><option>Líder de ministério</option><option>Membro</option></select>
+            </div>
+            <div class="fld"><label>Ministério</label>
+              <select><option>Nenhum / Geral</option><option>Ministério da Música</option><option>Ministério Jovem</option><option>Ministério da Mulher</option><option>Desbravadores</option><option>Sonoplastia</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">Permissões de acesso</div>
+          <div class="tog-row"><div><div class="tl">Painel Pastoral — criar e editar programações</div><div class="ts">Acesso total aos formulários de culto</div></div><div class="tog on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="tog-row"><div><div class="tl">Painel Música — gerenciar louvores e biblioteca</div><div class="ts">Cadastrar músicas e vincular às programações</div></div><div class="tog" onclick="this.classList.toggle('on')"></div></div>
+          <div class="tog-row"><div><div class="tl">Painel Mídias — enviar vídeos e apresentações</div><div class="ts">Upload e vinculação de mídias aos cultos</div></div><div class="tog" onclick="this.classList.toggle('on')"></div></div>
+          <div class="tog-row"><div><div class="tl">Painel Sonoplastia — visualizar e concluir</div><div class="ts">Leitura, edição e envio por WhatsApp</div></div><div class="tog" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      </div>
+      <div class="footer-bar">
+        <button class="btn">Cancelar</button>
+        <button class="btn btn-pr">Salvar</button>
+      </div>
+    </div>
+
+    <!-- ╔══ BIBLIOTECA ══╗ -->
+    <div id="p-biblioteca" class="panel">
+      <div class="topbar">
+        <div><div class="topbar-title">Biblioteca de músicas</div><div class="topbar-sub">Acervo completo da igreja</div></div>
+        <button class="btn btn-pr btn-sm">+ Nova música</button>
+      </div>
+      <div class="scroll-area">
+        <div class="lib-hd">
+          <input id="lb-q" type="text" placeholder="Buscar por título ou artista..." style="flex:1;min-width:140px" oninput="filtLib()">
+          <select id="lb-t" style="width:150px" onchange="filtLib()">
+            <option value="">Todos os tipos</option>
+            <option value="congregacional">Congregacional</option>
+            <option value="especial">Especial</option>
+            <option value="hino">Hino</option>
+            <option value="solo">Solo</option>
+          </select>
+        </div>
+        <table class="lib-table">
+          <thead><tr><th>Título / artista</th><th>Grupo</th><th>Tipo</th><th>Uso</th><th style="width:60px"></th></tr></thead>
+          <tbody id="lb-body">
+            <tr data-tipo="congregacional" data-t="preciso de ti"><td><div class="lib-t">Preciso de Ti</div><span class="lib-l">youtu.be/abc123</span></td><td style="color:var(--tx2);font-size:13px">Min. Ipiranga</td><td><span class="badge b-mus">congr.</span></td><td style="color:var(--tx2);font-size:12px">8×</td><td><div style="display:flex;gap:4px"><div class="ico-btn" style="font-size:12px">✎</div><div class="ico-btn" style="font-size:12px">🗑</div></div></td></tr>
+            <tr data-tipo="especial" data-t="deus cuida de mim"><td><div class="lib-t">Deus Cuida de Mim</div><span class="lib-l">youtu.be/jkl012</span></td><td style="color:var(--tx2);font-size:13px">Grupo Louvor Vivo</td><td><span class="badge b-esp">especial</span></td><td style="color:var(--tx2);font-size:12px">3×</td><td><div style="display:flex;gap:4px"><div class="ico-btn" style="font-size:12px">✎</div><div class="ico-btn" style="font-size:12px">🗑</div></div></td></tr>
+            <tr data-tipo="congregacional" data-t="grande és tu"><td><div class="lib-t">Grande és Tu</div><span class="lib-l">youtu.be/def456</span></td><td style="color:var(--tx2);font-size:13px">Min. da Música</td><td><span class="badge b-mus">congr.</span></td><td style="color:var(--tx2);font-size:12px">12×</td><td><div style="display:flex;gap:4px"><div class="ico-btn" style="font-size:12px">✎</div><div class="ico-btn" style="font-size:12px">🗑</div></div></td></tr>
+            <tr data-tipo="hino" data-t="maravilhosa graça"><td><div class="lib-t">Maravilhosa Graça</div><span class="lib-l">youtu.be/stu901</span></td><td style="color:var(--tx2);font-size:13px">Hinário Adventista</td><td><span class="badge b-atv">hino</span></td><td style="color:var(--tx2);font-size:12px">5×</td><td><div style="display:flex;gap:4px"><div class="ico-btn" style="font-size:12px">✎</div><div class="ico-btn" style="font-size:12px">🗑</div></div></td></tr>
+            <tr data-tipo="especial" data-t="ainda que a figueira"><td><div class="lib-t">Ainda que a Figueira</div><span class="lib-l">youtu.be/vwx234</span></td><td style="color:var(--tx2);font-size:13px">Dueto Esperança</td><td><span class="badge b-esp">especial</span></td><td style="color:var(--tx2);font-size:12px">2×</td><td><div style="display:flex;gap:4px"><div class="ico-btn" style="font-size:12px">✎</div><div class="ico-btn" style="font-size:12px">🗑</div></div></td></tr>
+            <tr data-tipo="congregacional" data-t="santo espírito"><td><div class="lib-t">Santo Espírito</div><span class="lib-l">youtu.be/ghi789</span></td><td style="color:var(--tx2);font-size:13px">Fernandinho</td><td><span class="badge b-mus">congr.</span></td><td style="color:var(--tx2);font-size:12px">6×</td><td><div style="display:flex;gap:4px"><div class="ico-btn" style="font-size:12px">✎</div><div class="ico-btn" style="font-size:12px">🗑</div></div></td></tr>
+            <tr data-tipo="solo" data-t="cada vez mais perto"><td><div class="lib-t">Cada Vez Mais Perto</div><span class="lib-l">youtu.be/xyz999</span></td><td style="color:var(--tx2);font-size:13px">Maria Souza</td><td><span class="badge b-esp">solo</span></td><td style="color:var(--tx2);font-size:12px">4×</td><td><div style="display:flex;gap:4px"><div class="ico-btn" style="font-size:12px">✎</div><div class="ico-btn" style="font-size:12px">🗑</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ╔══ SONOPLASTIA ══╗ -->
+    <div id="p-sono" class="panel">
+      <div class="topbar">
+        <div><div class="topbar-title">Painel da sonoplastia</div><div class="topbar-sub">Programações da semana</div></div>
+        <span class="badge b-ok" style="font-size:12px;padding:5px 12px">2 prontas · 1 pendente</span>
+      </div>
+      <div class="scroll-area">
+
+        <div class="prog-card ok">
+          <div class="prog-hd">
+            <div><div class="prog-title">Sábado manhã — Culto Divino</div><div class="prog-id">SAB-MANHA-2025-04-05</div></div>
+            <div class="prog-acts">
+              <button class="btn btn-sm">Exibir</button>
+              <button class="btn btn-sm">Editar</button>
+              <button class="btn btn-sm">Enviar WhatsApp</button>
+              <button class="btn btn-pr btn-sm">Concluído</button>
+            </div>
+          </div>
+          <div class="prog-meta">
+            <span>Ancião: <strong>Anc. João Silva</strong></span>
+            <span>Ministério: <strong>Min. Alegria</strong></span>
+            <span>Itens: <strong>10</strong></span>
+            <span class="prog-status" style="color:var(--tx-ok)">● Completa</span>
+          </div>
+        </div>
+
+        <div class="prog-card warn">
+          <div class="prog-hd">
+            <div><div class="prog-title">Escola Sabatina</div><div class="prog-id">SAB-MANHA-ES-2025-04-05</div></div>
+            <div class="prog-acts">
+              <button class="btn btn-sm">Exibir</button>
+              <button class="btn btn-sm">Editar</button>
+              <button class="btn btn-sm">Enviar WhatsApp</button>
+              <button class="btn btn-pr btn-sm">Concluído</button>
+            </div>
+          </div>
+          <div class="prog-meta">
+            <span>Ministério: <strong>Min. da Criança</strong></span>
+            <span>Itens: <strong>6</strong></span>
+            <span class="prog-status" style="color:var(--tx-warn)">⏳ Aguardando músicas</span>
+          </div>
+        </div>
+
+        <div class="prog-card">
+          <div class="prog-hd">
+            <div><div class="prog-title">Culto Jovem — Sábado tarde</div><div class="prog-id">SAB-TARDE-2025-04-05</div></div>
+            <div class="prog-acts">
+              <button class="btn btn-sm">Exibir</button>
+              <button class="btn btn-sm">Editar</button>
+              <button class="btn btn-sm">Enviar WhatsApp</button>
+              <button class="btn btn-pr btn-sm">Concluído</button>
+            </div>
+          </div>
+          <div class="prog-meta">
+            <span>Ancião: <strong>Anc. Pedro Costa</strong></span>
+            <span>Ministério: <strong>Min. Jovem</strong></span>
+            <span>Itens: <strong>8</strong></span>
+            <span class="prog-status" style="color:var(--tx-ok)">● Completa</span>
+          </div>
+        </div>
+
+        <div class="prog-card err">
+          <div class="prog-hd">
+            <div><div class="prog-title">Domingos Especiais</div><div class="prog-id">DOM-2025-04-06</div></div>
+            <div class="prog-acts">
+              <button class="btn btn-sm">Exibir</button>
+              <button class="btn btn-sm">Editar</button>
+              <button class="btn btn-sm">Enviar WhatsApp</button>
+              <button class="btn btn-pr btn-sm">Concluído</button>
+            </div>
+          </div>
+          <div class="prog-meta">
+            <span>Ministério: <strong>—</strong></span>
+            <span>Itens: <strong>2</strong></span>
+            <span class="prog-status" style="color:var(--tx-err)">✕ Incompleta</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- ── BOTTOM NAV (mobile) ── -->
+  <nav class="bottom-nav" id="bnav">
+    <button class="bnav-item active" id="bn-culto" onclick="goMob(this,'culto')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 3V2M11 3V2M2 7h12"/></svg>
+      Culto<div class="bnav-dot"></div>
+    </button>
+    <button class="bnav-item" id="bn-musicas" onclick="goMob(this,'musicas')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 12V4l8-2v8"/><circle cx="4" cy="12" r="2"/><circle cx="12" cy="10" r="2"/></svg>
+      Músicas<div class="bnav-dot"></div>
+    </button>
+    <button class="bnav-item" id="bn-midias" onclick="goMob(this,'midias')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="9" rx="1.5"/><path d="M6 7.5l4 2-4 2V7.5z" fill="currentColor" stroke="none"/></svg>
+      Mídias<div class="bnav-dot"></div>
+    </button>
+    <button class="bnav-item" id="bn-biblioteca" onclick="goMob(this,'biblioteca')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2h2v12H3zM7 2h2v12H7zM11 2l2 .5v11l-2-.5z"/></svg>
+      Biblioteca<div class="bnav-dot"></div>
+    </button>
+    <button class="bnav-item" id="bn-sono" onclick="goMob(this,'sono')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="10" height="8" rx="1"/><path d="M11 6l4-2v8l-4-2"/></svg>
+      Sono<div class="bnav-dot"></div>
+    </button>
+  </nav>
+
+</div><!-- /shell -->
+
+<script>
+const panels = ['culto','musicas','midias','responsaveis','biblioteca','sono'];
+
+function go(el, id) {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  showPanel(id);
+}
+
+function goMob(el, id) {
+  document.querySelectorAll('.bnav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  showPanel(id);
+}
+
+function showPanel(id) {
+  panels.forEach(p => {
+    const el = document.getElementById('p-' + p);
+    if (el) el.classList.toggle('active', p === id);
+  });
+}
+
+function gerarId() {
+  const tipo = document.getElementById('tipo').value;
+  const data = document.getElementById('data').value;
+  document.getElementById('bloco-sab').style.display = tipo === 'SAB-MANHA' ? 'block' : 'none';
+  if (!tipo || !data) {
+    document.getElementById('id-box').textContent = '—';
+    document.getElementById('id-top').textContent = 'ID automática';
+    return;
+  }
+  const d = new Date(data + 'T12:00:00');
+  const id = tipo + '-' + d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  document.getElementById('id-box').textContent = id;
+  document.getElementById('id-top').textContent = id;
+}
+
+function togBlocos() {
+  const on = document.getElementById('tog-blocos').classList.contains('on');
+  document.getElementById('bloco-es').style.display = on ? 'grid' : 'none';
+}
+
+function togMenu() {
+  const m = document.getElementById('add-menu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+
+function setMidia(tipo) {
+  document.getElementById('zone-up').style.display = tipo === 'up' ? 'block' : 'none';
+  document.getElementById('zone-lk').style.display = tipo === 'lk' ? 'block' : 'none';
+  document.getElementById('opt-up').classList.toggle('sel', tipo === 'up');
+  document.getElementById('opt-lk').classList.toggle('sel', tipo === 'lk');
+}
+
+function filtLib() {
+  const q = document.getElementById('lb-q').value.toLowerCase();
+  const t = document.getElementById('lb-t').value;
+  document.querySelectorAll('#lb-body tr').forEach(r => {
+    const ok = (!q || (r.dataset.t||'').includes(q)) && (!t || r.dataset.tipo === t);
+    r.style.display = ok ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>
