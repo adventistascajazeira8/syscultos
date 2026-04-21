@@ -62,9 +62,13 @@ export async function salvarProgramacao(programacaoId: string, dados: {
           ordem: l.ordem,
         }))
       )
-      for (const l of item.louvores) {
-        if (l.musica_id) {
-          await supabase.rpc('incrementar_uso_musica', { p_id: l.musica_id }).catch(() => {})
+      // Incrementar uso das músicas
+    for (const l of item.louvores) {
+      if (l.musica_id) {
+        try {
+          await supabase.rpc('incrementar_uso_musica', { p_id: l.musica_id })
+        } catch (err) {
+          console.log('Erro silencioso ao incrementar música:', err)
         }
       }
     }
