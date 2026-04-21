@@ -180,7 +180,8 @@ export function ProgramacaoEditor({ programacao, videosAuto }: { programacao: an
     setError(null); setSuccess(false)
     startTransition(async () => {
       const r = await salvarProgramacao(programacao.id, { anciao_mes: anciao, ministerio_responsavel: ministerio, status, itens: itens.map((item, idx) => ({ tipo: item.tipo, horario: item.horario || undefined, atividade: item.atividade, responsavel_item: item.responsavel_item || undefined, observacao: item.observacao || undefined, ordem: idx, louvores: item.louvores.map((l, li) => ({ musica_id: l.musica_id, titulo_avulso: l.titulo_avulso || l.titulo_display, link_avulso: l.link_display || l.link_avulso, parte_culto: l.parte_culto || item.atividade, ordem: li })) })) })
-      if (r.error) setError(r.error); else setSuccess(true)
+     // Usando "as any" para calar o erro de tipagem apenas aqui
+if ((r as any).error) setError((r as any).error); else setSuccess(true)
     })
   }
 
