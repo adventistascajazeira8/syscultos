@@ -44,7 +44,8 @@ export async function gerarDocumentoWord(programacaoId: string): Promise<Buffer>
   const doc = new Document({
     sections: [{
       headers: { default: new Header({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'Igreja Adventista do Sétimo Dia — SysCultos', color: '888888', size: 16, font: 'Calibri' })] })] }) },
-      footers: { default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'Página ', size: 16, color: '888888', font: 'Calibri' }), new PageNumber()] })] }) },
+      footers: { default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'Página ', size: 16, color: '888888', font: 'Calibri' }), new TextRun({
+    children: [PageNumber.CURRENT], }) ] })] }) },
       children: [
         new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 80 }, children: [new TextRun({ text: titulo.toUpperCase(), bold: true, size: 28, font: 'Calibri', color: COR_HD })] }),
         new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 80 }, children: [new TextRun({ text: dataFmt.charAt(0).toUpperCase() + dataFmt.slice(1), size: 22, font: 'Calibri', color: '444444' })] }),
