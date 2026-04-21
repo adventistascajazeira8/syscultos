@@ -6,14 +6,16 @@ import {
   AlignmentType, 
   Header, 
   Footer, 
-  PageNumber, // Certifique-se de que PageNumber está sendo importado aqui
+  PageNumber,
   HeadingLevel 
 } from 'docx';
 
-// ... (seus outros imports ou constantes como COR_HD)
+// Se tiveres constantes de cores, define-as aqui ou importa-as
+const COR_HD = '444444'; 
 
 export async function gerarDocumentoWord(id: string) {
-  // ... (sua lógica de busca de dados/programação)
+  // Nota: Aqui deve estar a tua lógica de procurar os dados no Supabase/Banco
+  // conforme o ID que recebes.
 
   const doc = new Document({
     sections: [
@@ -48,38 +50,62 @@ export async function gerarDocumentoWord(id: string) {
                     color: '888888', 
                     font: 'Calibri' 
                   }),
-                  // CORREÇÃO AQUI: Removido o "new" e os parênteses "()"
-                  PageNumber.CURRENT, 
+                  // CORREÇÃO DEFINITIVA: PageNumber dentro de um TextRun
+                  new TextRun({
+                    children: [PageNumber.CURRENT],
+                    size: 16,
+                    color: '888888',
+                    font: 'Calibri',
+                  }),
                   new TextRun({ 
                     text: " de ", 
                     size: 16, 
                     color: '888888', 
                     font: 'Calibri' 
                   }),
-                  PageNumber.TOTAL_PAGES
+                  new TextRun({
+                    children: [PageNumber.TOTAL_PAGES],
+                    size: 16,
+                    color: '888888',
+                    font: 'Calibri',
+                  }),
                 ],
               }),
             ],
           }),
         },
         children: [
-          // ... (restante do conteúdo do documento: Títulos, tabelas, etc.)
+          // Exemplo de conteúdo do corpo do documento
           new Paragraph({
             heading: HeadingLevel.HEADING_1,
+            alignment: AlignmentType.CENTER,
             children: [
               new TextRun({ 
-                text: 'Título da Programação', 
+                text: 'PROGRAMAÇÃO DO CULTO', 
                 size: 28, 
                 font: 'Calibri', 
-                color: '444444' 
+                bold: true,
+                color: COR_HD 
               })
             ],
           }),
-          // ...
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [
+              new TextRun({ 
+                text: `ID: ${id}`, 
+                size: 18, 
+                font: 'Calibri', 
+                color: '666666' 
+              })
+            ],
+          }),
+          // Adiciona aqui o restante da tua lógica de itens_programa.map(...)
         ],
       },
     ],
   });
 
+  // Retorna o buffer para ser usado no Route Handler (API)
   return await Packer.toBuffer(doc);
 }
