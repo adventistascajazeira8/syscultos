@@ -3,57 +3,63 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
-export async function listarProgramacoesSono(filtro?: { status?: string }) {
+// 1. Função auxiliar para buscar os dados
+async function buscarProgramacao(id: string) {
   const supabase = await createClient()
-  let q = supabase
+  const { data } = await supabase
     .from('programacoes')
-    .select(`*, cultos(*), itens_programa(*, louvores(*, biblioteca_musicas(*)))`)
-    .order('updated_at', { ascending: false })
-    .limit(30)
-
-  if (filtro?.status) q = q.eq('status', filtro.status)
-  const { data } = await q
-  
-  return (data || []).map(p => { 
-    if (p.itens_programa) p.itens_programa.sort((a: any, b: any) => a.ordem - b.ordem)
-    return p 
-  })
-}
-
-export async function marcarConcluida(id: string) {
-  const supabase = await createClient()
-  await supabase.from('programacoes').update({ status: 'concluida', updated_at: new Date().toISOString() }).eq('id', id)
-  revalidatePath('/dashboard/sonoplastia')
-  return { success: true }
-}
-
-export async function registrarDisparoWpp(id: string) {
-  const supabase = await createClient()
-  await supabase.from('programacoes').update({ status: 'enviada', updated_at: new Date().toISOString() }).eq('id', id)
-  revalidatePath('/dashboard/sonoplastia')
-  return { success: true }
-}
-
-// NOME PADRONIZADO AQUI
-export async function gerarTextoWhatsApp(id: string): Promise<string> {
-  const supabase = await createClient()
-  const { data: prog } = await supabase
-    .from('programacoes')
-    .select(`*, cultos(*), itens_programa(*, louvores(*, biblioteca_musicas(*)))`)
+    .select(`*, cultos(*)`)
     .eq('id', id)
     .single()
+  return data
+}
 
-  if (!prog || !prog.cultos) return ''
+// 2. Função para salvar alterações
+export async function salvarProgramacao(id: string, dados: any) {
+  const supabase = await createClient()
   
-  const culto = prog.cultos as any
-  const TIPO: Record<string, string> = { 'SAB-MANHA': 'Culto Divino', 'SAB-TARDE': 'Culto Jovem', 'DOM': 'Domingo', 'QUA': 'Quarta' }
-  const dataFmt = new Date(culto.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })
+  const { error } = await supabase
+    .from('programacoes')
+    .update({
+      anciao_mes: dados.anciao_mes,
+      ministerio_responsavel: dados.ministerio_responsavel,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
 
-  let msg = `*${TIPO[culto.tipo] || 'Programação'} - ${dataFmt}*\n\n`
+  if (error) throw new Error(error.message)
   
-  for (const item of (prog.itens_programa || []).sort((a: any, b: any) => a.ordem - b.ordem)) {
-    msg += `*${item.horario?.slice(0, 5) || ''}* | ${item.atividade}\n`
+  revalidatePath(`/dashboard/programacoes/${id}`)
+  return { success: true }
+}
+
+// 3. Função para gerar o texto do WhatsApp (Linha 82 corrigida)
+export async function gerarWhatsAppProg(id: string): Promise<string> {
+  try {
+    const prog = await buscarProgramacao(id)
+    if (!prog) return ''
+
+    const culto = (prog as any).cultos
+    if (!culto) return ''
+
+    const TIPO: Record<string, string> = { 
+      'SAB-MANHA': 'Culto Divino', 
+      'SAB-TARDE': 'Culto Jovem', 
+      'DOM': 'Domingo', 
+      'QUA': 'Quarta' 
+    }
+
+    const dataFmt = new Date(culto.data + 'T12:00:00').toLocaleDateString('pt-BR', { 
+      day: 'numeric', 
+      month: 'short' 
+    })
+
+    let msg = `*${TIPO[culto.tipo] || 'Programação'} - ${dataFmt}*\n`
+    if (prog.anciao_mes) msg += `Ancião: ${prog.anciao_mes}\n`
+    
+    return msg
+  } catch (error) {
+    console.error("Erro ao gerar WhatsApp:", error)
+    return ''
   }
-  
-  return msg
 }
