@@ -1,13 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // 1. Tente na raiz diretamente (como o erro sugere)
-  allowedDevOrigins: ['192.168.100.43'],
-
-  // 2. Mantenha aqui também por redundância de versão
-  devIndicators: {
-    allowedDevOrigins: ['192.168.100.43'],
-  },
+  /* Suas outras configurações aqui */
+  
+  // Usamos uma verificação para adicionar a propriedade apenas em desenvolvimento
+  ...(process.env.NODE_ENV === 'development' && {
+    experimental: {
+      allowedDevOrigins: ['192.168.100.43']
+    }
+  } as any) 
 };
 
 export default nextConfig;
