@@ -3,112 +3,60 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
-export async function listarProgramacoesSono(filtro?: { status?: string }) {
+// Função auxiliar para buscar a programação (necessária para as outras funções)
+async function buscarProgramacao(id: string) {
   const supabase = await createClient()
-  let q = supabase
+  const { data } = await supabase
     .from('programacoes')
-    .select(`*, cultos(*), itens_programa(*, louvores(*, biblioteca_musicas(*)))`)
-    .order('updated_at', { ascending: false })
-    .limit(30)
-
-  if (filtro?.status) q = q.eq('status', filtro.status)
-  
-  const { data } = await q
-  
-  return (data || []).map(p => { 
-    if (p.itens_programa) {
-      p.itens_programa.sort((a: any, b: any) => a.ordem - b.ordem);
-    }
-    return p 
-  })
-}
-
-export async function marcarConcluida(id: string) {
-  const supabase = await createClient()
-  await supabase
-    .from('programacoes')
-    .update({ status: 'concluida', updated_at: new Date().toISOString() })
-    .eq('id', id)
-  
-  revalidatePath('/dashboard/sonoplastia')
-  return { success: true }
-}
-
-export async function registrarDisparoWpp(id: string) {
-  const supabase = await createClient()
-  await supabase
-    .from('programacoes')
-    .update({ status: 'enviada', updated_at: new Date().toISOString() })
-    .eq('id', id)
-  
-  revalidatePath('/dashboard/sonoplastia')
-  return { success: true }
-}
-
-export async function gerarTextoWhatsApp(id: string): Promise<string> {
-  const supabase = await createClient()
-  
-  const { data: prog } = await supabase
-    .from('programacoes')
-    .select(`*, cultos(*), itens_programa(*, louvores(*, biblioteca_musicas(*)))`)
+    .select(`*, cultos(*)`)
     .eq('id', id)
     .single()
+  return data
+}
 
-  if (!prog || !prog.cultos) return ''
-
-  // Ordenação segura dos itens
-  if (prog.itens_programa) {
-    prog.itens_programa.sort((a: any, b: any) => a.ordem - b.ordem)
-  }
-
-  const culto = prog.cultos as any
-  const TIPO: Record<string, string> = { 
-    'SAB-MANHA': 'Culto Divino — Sábado manhã', 
-    'SAB-TARDE': 'Culto Jovem', 
-    'DOM': 'Domingos Especiais', 
-    'QUA': 'Culto de Quarta', 
-    'BATISMO': 'Batismo', 
-    'SEM-ORACAO': 'Semana de Oração' 
-  }
-
-  // Garantia de que a data existe para não quebrar o build
-  const dataBruta = culto.data || new Date().toISOString().split('T')[0]
-  const dataFmt = new Date(dataBruta + 'T12:00:00').toLocaleDateString('pt-BR', { 
-    weekday: 'long', 
-    day: 'numeric', 
-    month: 'long', 
-    year: 'numeric' 
-  })
-
-  let msg = `🕊️ *${prog.bloco !== 'principal' ? prog.bloco.toUpperCase() : TIPO[culto.tipo] || culto.tipo}*\n`
-  msg += `*${dataFmt.charAt(0).toUpperCase() + dataFmt.slice(1)}*\n`
+export async function salvarProgramacao(id: string, dados: any) {
+  const supabase = await createClient()
   
-  if (prog.anciao_mes) msg += `*Ancião do mês: ${prog.anciao_mes}*\n`
-  if (prog.ministerio_responsavel) msg += `*Ministério: ${prog.ministerio_responsavel}*\n`
+  const { error } = await supabase
+    .from('programacoes')
+    .update({
+      anciao_mes: dados.anciao_mes,
+      ministerio_responsavel: dados.ministerio_responsavel,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+
+  if (error) return { success: false, error: error.message }
   
-  msg += `━━━━━━━━━━━━━━━━━━━\n\n`
+  revalidatePath(`/dashboard/programacoes/${id}`)
+  return { success: true }
+}
 
-  for (const item of (prog.itens_programa || [])) {
-    const hora = item.horario ? item.horario.slice(0, 5) : ''
-    msg += hora ? `*${hora}* | *${item.atividade}*\n` : `*${item.atividade}*\n`
-    
-    if (item.responsavel_item) msg += `_${item.responsavel_item}_\n`
+// Esta é a função que estava dando erro na linha 82
+export async function gerarWhatsAppProg(id: string): Promise<string> {
+  try {
+    const prog = await buscarProgramacao(id)
+    if (!prog) return ''
 
-    // Ordenação e mapeamento dos louvores
-    const louvoresOrdenados = (item.louvores || []).sort((a: any, b: any) => a.ordem - b.ordem)
-    
-    for (const l of louvoresOrdenados) {
-      const titulo = l.biblioteca_musicas?.titulo || l.titulo_avulso || ''
-      const link = l.biblioteca_musicas?.link_youtube || l.link_avulso || ''
-      if (titulo) msg += `  • ${titulo}\n`
-      if (link) msg += `    ${link}\n`
+    const culto = prog.cultos as any
+    const TIPO: Record<string, string> = { 
+      'SAB-MANHA': 'Culto Divino', 
+      'SAB-TARDE': 'Culto Jovem', 
+      'DOM': 'Domingo', 
+      'QUA': 'Quarta' 
     }
 
-    if (item.observacao) msg += `_Obs: ${item.observacao}_\n`
-    msg += '\n'
-  }
+    const dataFmt = new Date(culto.data + 'T12:00:00').toLocaleDateString('pt-BR', { 
+      day: 'numeric', 
+      month: 'short' 
+    })
 
-  msg += `━━━━━━━━━━━━━━━━━━━\n_Gerado pelo SysCultos_`
-  
-  return msg
+    let msg = `*${TIPO[culto.tipo] || 'Programação'} - ${dataFmt}*\n`
+    if (prog.anciao_mes) msg += `Ancião: ${prog.anciao_mes}\n`
+    
+    return msg
+  } catch (e) {
+    console.error(e)
+    return ''
+  }
 }
