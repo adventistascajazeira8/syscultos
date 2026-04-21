@@ -34,7 +34,7 @@ export function SonoplastiaCard({ prog }: { prog: any }) {
             <Button variant="secondary" size="sm" loading={isPending} onClick={() => startTransition(async () => setWpp(await gerarTextoWhatsApp(prog.id)))}>WhatsApp</Button>
             <Button variant="secondary" size="sm" onClick={() => window.open(`/api/programacao/${prog.id}/word`, '_blank')}>Word</Button>
             {prog.status !== 'concluida'
-              ? <Button variant="primary" size="sm" loading={isPending} onClick={() => startTransition(async () => marcarConcluida(prog.id))}>Concluído</Button>
+              ? <Button variant="primary" size="sm" loading={isPending} onClick={() => startTransition(async () => { await marcarConcluida(prog.id); })}>Concluído</Button>
               : <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>✓ Concluído</span>}
           </div>
         </div>
