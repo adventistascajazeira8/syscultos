@@ -1,16 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* Suas outras configurações normais (se houver) vão aqui */
+  // @ts-ignore - Necessário para versões 15/16 onde o tipo ainda está sendo atualizado
+  allowedDevOrigins: ["192.168.100.43"],
 };
 
-// Esta lógica abaixo só roda no seu PC (desenvolvimento)
-// Ela não será executada na Vercel, evitando o erro de build
-if (process.env.NODE_ENV === "development") {
-  (nextConfig as any).experimental = {
-    ...((nextConfig as any).experimental || {}),
-    allowedDevOrigins: ["192.168.100.43"],
-  };
+// Se você precisar manter a compatibilidade com o deploy:
+if (process.env.NODE_ENV === "production") {
+  // @ts-ignore
+  delete nextConfig.allowedDevOrigins;
 }
 
 export default nextConfig;
